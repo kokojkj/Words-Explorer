@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Words Explorer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css"/>
+    <style>
+        body {
+            background-color: #0a0a1a;
+            color: #7fff00;
+            font-family: 'Courier New', Courier, monospace;
+            height: 100vh;
+            margin: 0;
+        }
+        .terminal {
+            height: 100%;
+            overflow: auto;
+            padding: 10px;
+        }
+        .error {
+            color: #ff4500;
+        }
+        .definition {
+            color: #00bfff;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal" id="terminal"></div>
+    <script src="https://cdn.jsdelivr.net/npm/jquery"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const DICTIONARY = 'https://api.dictionaryapi.dev/api/v2/entries/en/';
+            const WORD = 'https://random-word-api.vercel.app/api?words=1';
+
+            function fetchRandomWord(terminal) {
+                $.ajax({
+                    url: WORD,
+                    method: 'GET',
+                    success: function(response) {
+                        if (response && response.length > 0) {
+                            const randomWord = response[0];
+                            defineWord(terminal, randomWord);
+                        } else {
+                            terminal.echo('Failed to fetch a random word.', {
+                            });
+                        }
+                    },
+                   
+                    
+                });
+            }
+
+function defineWord(terminal, word) {
+    terminal.echo(`Looking up: ${word}`);
+    terminal.echo("Searching dictionary...");
+
+    $.ajax({
+        url: DICTIONARY + word,
+        method: 'GET',
+        success: function(response) {
+            if (response && Array.isArray(response) && response.length > 0) {
+                const wordData = response[0];
+                terminal.echo(`Definitions for "${wordData.word}":`);
+                
+                wordData.meanings.forEach((meaning) => {
+                    terminal.echo(`\n${meaning.partOfSpeech.toUpperCase()}:`);
+                    
+                    meaning.definitions.slice(0, 3).forEach((def, index) => {
+                        terminal.echo(`${index + 1}. ${def.definition}`);
+                        
+                        
+                    });
+                });
+            } 
+        },
+        error: function(xhr, status, error) {
+            terminal.echo(`Dictionary lookup failed: ${xhr.status} ${error}`, {});
+        }
+    });
+}
+
+            $('#terminal').terminal({
+                help: function() {
+                    this.echo("🔍 Words Explorer Commands 🔍");
+                    this.echo("1. define [word] - Get word definition");
+                    this.echo("2. random - Get a random word with its definition");
+                    this.echo("3. clear - Clear terminal screen");
+                    this.echo("4. help - Show this help menu");
+                },
+                define: function(word) {
+                    
+                    defineWord(this, word);
+                },
+                random: function() {
+                    fetchRandomWord(this);
+                },
+                clear: function() {
+                    this.clear();
+                }
+            }, {
+                greetings: [
+                    '📚 Welcome to Word Explorer 📚',
+                    'Dive deep into the world of words!',
+                    'Type "help" to see available commands.'
+                ].join('\n'),
+                prompt: 'user > '
+            });
+        });
+    </script>
+</body>
+</html>
